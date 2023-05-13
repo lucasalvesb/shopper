@@ -1,5 +1,5 @@
-//const fs = require('fs')
-//const csv = require('csv-parser')
+import fs from 'fs'
+import csv from 'csv-parser'
 import mysql from 'mysql'
 
 // cria conexão com bd
@@ -19,14 +19,16 @@ connection.connect((err) => {
 
   console.log('Connected to database!')
 })
-/*
+
 // caminho do arquivo
-const filePath = 'path/to/uploaded/file.csv'
+const filePath = 'assets/atualizacao_preco_exemplo.csv'
 
 // checar se é .csv
 if (!filePath.endsWith('.csv')) {
   console.error('The uploaded file must be a CSV file')
-  return
+}
+else {
+  console.log('The uploaded file is a CSV file')
 }
 
 // lê e processar o conteúdo
@@ -43,13 +45,13 @@ fs.createReadStream(filePath)
     //preço de venda não pode ser menor que preço de custo
     //impeça qualquer reajuste maior ou menor que 10% do preço do produto
     //ao reajustar o preço de um pacote, o mesmo arquivo deve
-      conter os reajustes dos preços dos componentes do pacote de modo que o preço final da
-      soma dos componentes seja igual ao preço do pacote 
+     // conter os reajustes dos preços dos componentes do pacote de modo que o preço final da
+      //soma dos componentes seja igual ao preço do pacote 
 
 
 
     // inserir os dados processados na database
-    const sql = `INSERT INTO my_table (column1, column2, column3) VALUES (preencher1, preencher2, preencher3)`
+    const sql = `INSERT INTO shopperdb.products (column1, column2, column3) VALUES (preencher1, preencher2, preencher3)`
     const values = [data.field1, data.field2, data.field3]
 
     connection.query(sql, values, (err, result) => {
@@ -64,4 +66,3 @@ fs.createReadStream(filePath)
   .on('end', () => {
     console.log('CSV file processing complete')
   })
-*/
