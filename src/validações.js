@@ -28,14 +28,14 @@ app.use(function (req, res, next) {
 })
 
 // set up multer middleware
-const upload = multer({dest: 'uploads/'})
+const upload = multer({ dest: 'uploads/' })
 
 app.post('/uploads', upload.single('file'), (req, res) => {
   const file = req.file
 
   // check if it is a .csv file
   if (!file.originalname.endsWith('.csv')) {
-    res.status(400).send('The uploaded file must be a CSV file')
+    res.status(400).send('O arquivo tem que ser CSV')
   } else {
     const fileExtension = path.extname(file.originalname)
     const oldPath = file.path
@@ -44,41 +44,59 @@ app.post('/uploads', upload.single('file'), (req, res) => {
     fs.rename(oldPath, newPath, (err) => {
       if (err) {
         console.error(err)
-        res.status(500).send('An error occurred while renaming the file')
+        res.status(500).send('Houve um erro ao tentar renomear o arquivo')
       } else {
-        console.log('File renamed successfully')
-        // perform necessary validations
-        res.status(200).send('File uploaded and validated successfully')
+        console.log('Arquivo renomeado com sucesso')
+
+        // lê e processa o conteúdo
+        let hasProductCode = false
+        let hasNewPrice = false
+
+        fs.createReadStream(newPath)
+          .pipe(csv())
+          .on('data', (data) => {
+            const keys = Object.keys(data)
+            if (keys.includes('product_code')) {
+              hasProductCode = true
+            }
+            if (keys.includes('new_price')) {
+              hasNewPrice = true
+            }
+          })
+          .on('end', () => {
+            if (hasProductCode && hasNewPrice) {
+              console.log('Arquivo tem as colunas necessárias')
+              // validações necessárias
+              res.status(200).send('Arquivo foi enviado e validado com sucesso')
+            } else {
+              console.log('Arquivo não tem contém as colunas necessárias')
+              res
+                .status(400)
+                .send(
+                  'O arquivo precisa ter as colunas product_code e new_price'
+                )
+            }
+          })
       }
     })
   }
 })
 
-
-
 app.listen(port, () => {
   console.log(`Server running on port ${port}`)
 })
+// os códigos de produtos informados existem?
+
+// os preços estão preenchidos e são valores numéricos válidos?
+
+// o arquivo respeita as regras levantadas na seção CENARIO?
+//preço de venda não pode ser menor que preço de custo
+//impeça qualquer reajuste maior ou menor que 10% do preço do produto
+//ao reajustar o preço de um pacote, o mesmo arquivo deve
+// conter os reajustes dos preços dos componentes do pacote de modo que o preço final da
+//soma dos componentes seja igual ao preço do pacote
+
 /*
-// lê e processar o conteúdo
-fs.createReadStream(filePath)
-  .pipe(csv())
-  .on('data', (data) => {
-    // todos os campos necessários existem?
-    
-    // os códigos de produtos informados existem?
-
-    // os preços estão preenchidos e são valores numéricos válidos?
-
-    // o arquivo respeita as regras levantadas na seção CENARIO?
-    //preço de venda não pode ser menor que preço de custo
-    //impeça qualquer reajuste maior ou menor que 10% do preço do produto
-    //ao reajustar o preço de um pacote, o mesmo arquivo deve
-     // conter os reajustes dos preços dos componentes do pacote de modo que o preço final da
-      //soma dos componentes seja igual ao preço do pacote 
-
-
-
     // inserir os dados processados na database
     const sql = `INSERT INTO shopperdb.products (column1, column2, column3) VALUES (preencher1, preencher2, preencher3)`
     const values = [data.field1, data.field2, data.field3]
@@ -94,4 +112,5 @@ fs.createReadStream(filePath)
   })
   .on('end', () => {
     console.log('CSV file processing complete')
-  })*/
+  })
+*/
