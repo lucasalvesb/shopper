@@ -32,15 +32,29 @@ const upload = multer({dest: 'uploads/'})
 
 app.post('/uploads', upload.single('file'), (req, res) => {
   const file = req.file
+
   // check if it is a .csv file
   if (!file.originalname.endsWith('.csv')) {
     res.status(400).send('The uploaded file must be a CSV file')
   } else {
-    console.log('The uploaded file is a CSV file')
-    // perform necessary validations
-    res.status(200).send('File uploaded and validated successfully')
+    const fileExtension = path.extname(file.originalname)
+    const oldPath = file.path
+    const newPath = `${file.path}${fileExtension}`
+
+    fs.rename(oldPath, newPath, (err) => {
+      if (err) {
+        console.error(err)
+        res.status(500).send('An error occurred while renaming the file')
+      } else {
+        console.log('File renamed successfully')
+        // perform necessary validations
+        res.status(200).send('File uploaded and validated successfully')
+      }
+    })
   }
 })
+
+
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`)
