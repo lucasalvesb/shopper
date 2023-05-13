@@ -1,8 +1,14 @@
 import fs from 'fs'
 import csv from 'csv-parser'
 import mysql from 'mysql'
+import express from 'express'
+import multer from 'multer'
+import path from 'path'
 
-// cria conexão com bd
+const app = express()
+const port = 5173
+
+// create connection to db
 const connection = mysql.createConnection({
   host: 'localhost',
   user: 'lucasalves',
@@ -10,27 +16,36 @@ const connection = mysql.createConnection({
   database: 'shopperdb',
 })
 
-// abre a conexão
-connection.connect((err) => {
-  if (err) {
-    console.error('Error connecting to database:', err)
-    return
-  }
+//cors configs
 
-  console.log('Connected to database!')
+app.use(function (req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept'
+  )
+  next()
 })
 
-// caminho do arquivo
-const filePath = 'assets/atualizacao_preco_exemplo.csv'
+// set up multer middleware
+const upload = multer({dest: 'uploads/'})
 
-// checar se é .csv
-if (!filePath.endsWith('.csv')) {
-  console.error('The uploaded file must be a CSV file')
-}
-else {
-  console.log('The uploaded file is a CSV file')
-}
+app.post('/uploads', upload.single('file'), (req, res) => {
+  const file = req.file
+  // check if it is a .csv file
+  if (!file.originalname.endsWith('.csv')) {
+    res.status(400).send('The uploaded file must be a CSV file')
+  } else {
+    console.log('The uploaded file is a CSV file')
+    // perform necessary validations
+    res.status(200).send('File uploaded and validated successfully')
+  }
+})
 
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`)
+})
+/*
 // lê e processar o conteúdo
 fs.createReadStream(filePath)
   .pipe(csv())
@@ -65,4 +80,4 @@ fs.createReadStream(filePath)
   })
   .on('end', () => {
     console.log('CSV file processing complete')
-  })
+  })*/
