@@ -34,12 +34,15 @@ app.post('/uploads', upload.single('file'), (req, res) => {
   const file = req.file
 
   // check if it is a .csv file
+
+  const results = []
   if (!file.originalname.endsWith('.csv')) {
     res.status(400).send('O arquivo tem que ser CSV')
   } else {
     const fileExtension = path.extname(file.originalname)
     const oldPath = file.path
     const newPath = `${file.path}${fileExtension}`
+    const queryToArray = 'SELECT code, name, sales_price FROM products'
 
     fs.rename(oldPath, newPath, (err) => {
       if (err) {
@@ -80,7 +83,7 @@ app.post('/uploads', upload.single('file'), (req, res) => {
             }
           })
 
-        // checagem se os códigos de produtos informados existem
+        // checagem se os códigos de produtos informados existem e populando o array pra ser exibido no front end
         fs.createReadStream(newPath)
           .pipe(csv())
           .on('data', (data) => {
@@ -91,6 +94,10 @@ app.post('/uploads', upload.single('file'), (req, res) => {
               if (err) {
                 console.error(err)
               } else {
+                rows.forEach((row) => {
+                  results.push([row.code, row.name, row.sales_price])
+                })
+
                 if (rows.length === 0) {
                   console.log(
                     `Produto com código ${productCode} não existe no banco de dados`
@@ -102,6 +109,18 @@ app.post('/uploads', upload.single('file'), (req, res) => {
                 }
               }
             })
+          })
+        // colocando a coluna new_price no array pra ser exibido no front end
+        fs.createReadStream(newPath)
+          .pipe(csv())
+          .on('data', (row) => {
+            const index = results.findIndex((result) => result[0] === row.product_code)
+            if (index !== -1) {
+              results[index].push(row.new_price)
+            }
+          })
+          .on('end', () => {
+            console.log(results)
           })
         // checagem se os preços estão preenchidos e são valores numéricos válidos
         const csvParser = csv()
@@ -125,7 +144,32 @@ app.post('/uploads', upload.single('file'), (req, res) => {
           })
         // checagem se o arquivo respeita as regras levantadas na seção CENARIO
         // preço de venda não pode ser menor que preço de custo
+        fs.createReadStream(newPath)
+          .pipe(csv())
+          .on('data', (data) => {
+            const productCode = data['product_code']
+            const newPrice = parseFloat(data['new_price'])
 
+            const sql = `SELECT cost_price FROM products WHERE code='${productCode}'`
+            connection.query(sql, (err, rows) => {
+              if (err) {
+                console.error(err)
+              } else {
+                if (rows.length === 0) {
+                  console.log(
+                    `Produto com código ${productCode} não existe no banco de dados`
+                  )
+                } else {
+                  const costPrice = parseFloat(rows[0].cost_price)
+                  if (newPrice < costPrice) {
+                    console.log(
+                      `O valor de venda do produto com código ${productCode} não pode ser mais barato do que o valor de custo`
+                    )
+                  }
+                }
+              }
+            })
+          })
         // checar se o preço de venda não está mais do que 10% maior ou menor do que o preço atual
         rowIndex = null
         fs.createReadStream(newPath)
