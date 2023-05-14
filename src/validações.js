@@ -49,6 +49,8 @@ app.post('/uploads', upload.single('file'), (req, res) => {
         console.log('Arquivo renomeado com sucesso')
 
         // lê e processa o conteúdo
+
+        // checagem das colunas product_code e new_price no arquivo .csv
         let hasProductCode = false
         let hasNewPrice = false
 
@@ -77,10 +79,43 @@ app.post('/uploads', upload.single('file'), (req, res) => {
                 )
             }
           })
+
+        // checagem se os códigos de produtos informados existem
+        fs.createReadStream(newPath)
+          .pipe(csv())
+          .on('data', (data) => {
+            const productCode = data['product_code']
+            const sql = `SELECT * FROM products WHERE code='${productCode}'`
+
+            connection.query(sql, (err, rows) => {
+              if (err) {
+                console.error(err)
+              } else {
+                if (rows.length === 0) {
+                  console.log(
+                    `Produto com código ${productCode} não existe no banco de dados`
+                  )
+                } else {
+                  console.log(
+                    `Produto com código ${productCode} existe no banco de dados`
+                  )
+                }
+              }
+            })
+          })
+          .on('end', () => {
+            if (hasProductCode && hasNewPrice) {
+              console.log('Arquivo tem as colunas necessárias')
+            } else {
+              console.log('Arquivo nãotem as colunas necessárias')
+            }
+          })
       }
     })
   }
 })
+
+
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`)
