@@ -123,6 +123,44 @@ app.post('/uploads', upload.single('file'), (req, res) => {
               )
             }
           })
+        // checagem se o arquivo respeita as regras levantadas na seção CENARIO
+        // preço de venda não pode ser menor que preço de custo
+
+        // checar se o preço de venda não está mais do que 10% maior ou menor do que o preço atual
+        rowIndex = null
+        fs.createReadStream(newPath)
+          .pipe(csv())
+          .on('data', (data) => {
+            const productCode = data['product_code']
+            const newPrice = parseFloat(data['new_price'])
+            const sql = `SELECT * FROM products WHERE code='${productCode}'`
+
+            connection.query(sql, (err, rows) => {
+              if (err) {
+                console.error(err)
+              } else {
+                if (rows.length === 0) {
+                  console.log(
+                    `Produto com código ${productCode} não existe no banco de dados`
+                  )
+                } else {
+                  const salesPrice = parseFloat(rows[0]['sales_price'])
+                  const percentDifference =
+                    Math.abs((newPrice - salesPrice) / salesPrice) * 100
+                  if (percentDifference > 10) {
+                    console.log(
+                      `Atenção! Preço do produto com código ${productCode} difere mais de 10% do preço de venda atual`
+                    )
+                  } else {
+                    console.log(
+                      `Preço do produto com código ${productCode} está dentro do limite de 10%`
+                    )
+                  }
+                }
+              }
+            })
+            rowIndex++
+          })
       }
     })
   }
