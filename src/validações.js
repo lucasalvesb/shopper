@@ -103,19 +103,30 @@ app.post('/uploads', upload.single('file'), (req, res) => {
               }
             })
           })
-          .on('end', () => {
-            if (hasProductCode && hasNewPrice) {
-              console.log('Arquivo tem as colunas necessárias')
+        // checagem se os preços estão preenchidos e são valores numéricos válidos
+        const csvParser = csv()
+        let rowIndex = 0
+
+        fs.createReadStream(newPath)
+          .pipe(csvParser)
+          .on('data', (row) => {
+            rowIndex++
+            const newPrice = row['new_price']
+
+            if (typeof newPrice !== 'undefined' && !isNaN(newPrice)) {
+              console.log(
+                `Linha ${rowIndex} tem um valor numérico válido na coluna new_price.`
+              )
             } else {
-              console.log('Arquivo nãotem as colunas necessárias')
+              console.log(
+                `Linha ${rowIndex} não tem um valor numérico válido na coluna new_price.`
+              )
             }
           })
       }
     })
   }
 })
-
-
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`)
