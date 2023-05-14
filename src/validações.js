@@ -53,26 +53,25 @@ app.post('/uploads', upload.single('file'), (req, res) => {
 
         // lê e processa o conteúdo
 
-        // checagem das colunas product_code e new_price no arquivo .csv
-        let hasProductCode = false
-        let hasNewPrice = false
+        // checagem das colunas product_code e new_price no arquivo .csv - também já popula o array results com os campos product_code e new_price
 
         fs.createReadStream(newPath)
           .pipe(csv())
           .on('data', (data) => {
             const keys = Object.keys(data)
-            if (keys.includes('product_code')) {
-              hasProductCode = true
-            }
-            if (keys.includes('new_price')) {
-              hasNewPrice = true
+            if (keys.includes('product_code') && keys.includes('new_price')) {
+              const productCode = data['product_code']
+              const newPrice = data['new_price']
+              results.push({ product_code: productCode, new_price: newPrice })
+              
             }
           })
           .on('end', () => {
-            if (hasProductCode && hasNewPrice) {
+            console.log(results)
+            if (results.length > 0) {
               console.log('Arquivo tem as colunas necessárias')
               // validações necessárias
-              res.status(200).send('Arquivo foi enviado e validado com sucesso')
+              res.status(200).json({ results })
             } else {
               console.log('Arquivo não tem contém as colunas necessárias')
               res
@@ -83,7 +82,7 @@ app.post('/uploads', upload.single('file'), (req, res) => {
             }
           })
 
-        // checagem se os códigos de produtos informados existem e populando o array pra ser exibido no front end
+        // checagem se os códigos de produtos informados existem
         fs.createReadStream(newPath)
           .pipe(csv())
           .on('data', (data) => {
@@ -94,10 +93,6 @@ app.post('/uploads', upload.single('file'), (req, res) => {
               if (err) {
                 console.error(err)
               } else {
-                rows.forEach((row) => {
-                  results.push([row.code, row.name, row.sales_price])
-                })
-
                 if (rows.length === 0) {
                   console.log(
                     `Produto com código ${productCode} não existe no banco de dados`
@@ -110,18 +105,7 @@ app.post('/uploads', upload.single('file'), (req, res) => {
               }
             })
           })
-        // colocando a coluna new_price no array pra ser exibido no front end
-        fs.createReadStream(newPath)
-          .pipe(csv())
-          .on('data', (row) => {
-            const index = results.findIndex((result) => result[0] === row.product_code)
-            if (index !== -1) {
-              results[index].push(row.new_price)
-            }
-          })
-          .on('end', () => {
-            console.log(results)
-          })
+
         // checagem se os preços estão preenchidos e são valores numéricos válidos
         const csvParser = csv()
         let rowIndex = 0
