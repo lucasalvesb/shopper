@@ -81,19 +81,26 @@ function handleValidation() {
       .post('http://localhost:5173/uploads', formData)
       .then((response) => {
         setResponseMessage(response.data.message)
-        const results = response.data.results.map((result: any) => ({
-          new_price: result.new_price,
-        }))
+        const results = response.data.results.reduce((acc: any, curr: { product_code: any; new_price: any }) => {
+          return { ...acc, [curr.product_code]: curr.new_price }
+        }, {})
         axios
           .post('http://localhost:5173/columns')
           .then((response) => {
             const columns = response.data.columns
-            const products = results.concat(columns).map((product: any) => ({
-              product_code: product.product_code,
-              name: product.name,
-              sales_price: product.sales_price,
-              new_price: product.new_price,
-            }))
+            const products = columns.map((product: any) => {
+              const newPrice = results[product.product_code]
+              if (newPrice) {
+                return {
+                  product_code: product.product_code,
+                  name: product.name,
+                  sales_price: product.sales_price,
+                  new_price: newPrice,
+                }
+              } else {
+                return product
+              }
+            })
             setProducts(products)
           })
           .catch((error) => {
