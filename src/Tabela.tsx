@@ -2,7 +2,7 @@ import React from 'react'
 import './Tabela.css'
 
 type Product = {
-  product_code: string
+  product_code: number
   name: string
   sales_price: number
   new_price: number

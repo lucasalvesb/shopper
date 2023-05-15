@@ -27,6 +27,8 @@ app.use(function (req, res, next) {
   next()
 })
 
+
+
 // set up multer middleware
 const upload = multer({ dest: 'uploads/' })
 
@@ -53,7 +55,7 @@ app.post('/uploads', upload.single('file'), (req, res) => {
 
         // lê e processa o conteúdo
 
-        // checagem das colunas product_code e new_price no arquivo .csv - também já popula o array results com os campos product_code e new_price
+        // checagem das colunas product_code e new_price no arquivo .csv - também já popula o array results com o new_price
 
         fs.createReadStream(newPath)
           .pipe(csv())
@@ -63,7 +65,6 @@ app.post('/uploads', upload.single('file'), (req, res) => {
               const productCode = data['product_code']
               const newPrice = data['new_price']
               results.push({ product_code: productCode, new_price: newPrice })
-              
             }
           })
           .on('end', () => {
@@ -189,6 +190,31 @@ app.post('/uploads', upload.single('file'), (req, res) => {
             })
             rowIndex++
           })
+        // popular um array columns com o code, name e sales_price
+        //express
+        app.use(express.json())
+        app.post('/columns', (req, res) => {
+          console.log(req.body)
+          const { productCodes } = req.body
+          const sql = `SELECT code, name, sales_price FROM products`
+            console.log(sql)
+          connection.query(sql, (err, rows) => {
+            if (err) {
+              console.error(err)
+              res
+                .status(500)
+                .json({ message: 'Erro ao obter os dados dos produtos' })
+            } else {
+              const columns = rows.map((row) => ({
+                product_code: row.code,
+                name: row.name,
+                sales_price: row.sales_price,
+              }))
+              res.status(200).json({ columns })
+              
+            }
+          })
+        })
       }
     })
   }

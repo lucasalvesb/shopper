@@ -10,32 +10,58 @@ export default function App() {
   const [responseMessage, setResponseMessage] = useState('')
   const [productData, setProductData] = useState([])
   const [products, setProducts] = useState<Product[]>([])
-  
-type Product = {
-  product_code: string
-  name: string
-  sales_price: number
-  new_price: number
-}
+  const [columns, setColumns] = useState<Column[]>([])
 
-useEffect(() => {
-  async function fetchData() {
-    if (products.length === 0) {
-      return // não faça a call de api até estar populado
-    }
-    if (effectRan.current === false) {
-      const response = await axios.get<Product[]>('http://localhost:5173/uploads')
-      setProducts(response.data)
-    }
+  type Product = {
+    product_code: number
+    name: string
+    sales_price: number
+    new_price: number
   }
-  fetchData()
-}, [products])
+
+  type Column = {
+    code: number
+    name: string
+    sales_price: number
+  }
+
+  useEffect(() => {
+    async function fetchData() {
+      if (products.length === 0) {
+        return // don't make the API call until the products state is populated
+      }
+      if (effectRan.current === false) {
+        effectRan.current = true
+        const response = await axios.get<Product[]>(
+          'http://localhost:5173/uploads'
+        )
+        setProducts(response.data)
+      }
+    }
+    fetchData()
+  }, [products])
+
+  useEffect(() => {
+    async function fetchData() {
+      if (columns.length === 0) {
+        return // don't make the API call until the columns state is populated
+      }
+      if (effectRan.current === false) {
+        effectRan.current = true
+        const response = await axios.get<Column[]>(
+          'http://localhost:5173/columns'
+        )
+        setColumns(response.data)
+      }
+    }
+    fetchData()
+  }, [columns])
 
   function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const uploadedFile = event.target.files?.[0]
     if (uploadedFile) {
       if (!uploadedFile.name.endsWith('.csv')) {
-        alert('Por favor, envie um arquivo CSV')
+        alert('Please upload a CSV file')
         event.target.value = '' // reset the file input field
         setFile(null)
         setIsButtonDisabled(true)
@@ -46,29 +72,39 @@ useEffect(() => {
     }
   }
 
-  function handleValidation() {
-    if (file) {
-      const formData = new FormData()
-      formData.append('file', file)
+function handleValidation() {
+  if (file) {
+    const formData = new FormData()
+    formData.append('file', file)
 
-      axios
-        .post('http://localhost:5173/uploads', formData)
-        .then((response) => {
-          setResponseMessage(response.data.message)
-          const products = response.data.results.map((result: any) => ({
-            product_code: result.product_code,
-            name: '',
-            sales_price: 0,
-            new_price: result.new_price,
-          }))
-          setProducts(products)
-        })
-        .catch((error) => {
-          console.error(error)
-        })
-    }
+    axios
+      .post('http://localhost:5173/uploads', formData)
+      .then((response) => {
+        setResponseMessage(response.data.message)
+        const results = response.data.results.map((result: any) => ({
+          new_price: result.new_price,
+        }))
+        axios
+          .post('http://localhost:5173/columns')
+          .then((response) => {
+            const columns = response.data.columns
+            const products = results.concat(columns).map((product: any) => ({
+              product_code: product.product_code,
+              name: product.name,
+              sales_price: product.sales_price,
+              new_price: product.new_price,
+            }))
+            setProducts(products)
+          })
+          .catch((error) => {
+            console.error(error)
+          })
+      })
+      .catch((error) => {
+        console.error(error)
+      })
   }
-
+}
 
   function handleUpdate() {
     // update
