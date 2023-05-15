@@ -14,26 +14,28 @@ type Props = {
 
 const ProductTable: React.FC<Props> = ({ products }) => {
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>Código</th>
-          <th>Nome</th>
-          <th>Preço atual</th>
-          <th>Novo preço</th>
-        </tr>
-      </thead>
-      <tbody>
-        {products.map((product) => (
-          <tr key={product.product_code}>
-            <td>{product.product_code}</td>
-            <td>{product.name}</td>
-            <td>{product.sales_price}</td>
-            <td>{product.new_price}</td>
+    <div className="product-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nome</th>
+            <th>Preço atual</th>
+            <th>Novo preço</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {products.map((product) => (
+            <tr key={product.product_code}>
+              <td>{product.product_code}</td>
+              <td>{product.name}</td>
+              <td>{product.sales_price}</td>
+              <td>{product.new_price}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
 

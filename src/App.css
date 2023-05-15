@@ -10,13 +10,22 @@
   cursor: pointer;
 }
 
+h1 {
+  font-size: 32px;
+  font-weight: bold;
+  color: #333;
+  padding-bottom: 1.5rem;
+  padding-top: 1.5rem;
+  padding-left: 1rem;
+}
+
 .upload-button:hover {
   background-color: #ddd;
 }
 
 .action-buttons {
   border: none;
-  background-color: #2DA77A;
+  background-color: #2da77a;
   color: #fff;
   padding: 12px 20px;
   font-size: 16px;
@@ -26,11 +35,10 @@
 }
 
 .action-buttons:hover {
-  background-color: #1A7855;
+  background-color: #1a7855;
 }
 
 .action-buttons:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
-
