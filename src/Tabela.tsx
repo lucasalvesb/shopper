@@ -17,10 +17,10 @@ const ProductTable: React.FC<Props> = ({ products }) => {
     <table>
       <thead>
         <tr>
-          <th>Product Code</th>
-          <th>Name</th>
-          <th>Sales Price</th>
-          <th>New Price</th>
+          <th>Código</th>
+          <th>Nome</th>
+          <th>Preço atual</th>
+          <th>Novo preço</th>
         </tr>
       </thead>
       <tbody>

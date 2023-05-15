@@ -139,7 +139,7 @@ function handleValidation() {
       </button>
       {responseMessage && <p>{responseMessage}</p>}
       <div>
-        <h1>Product List</h1>
+        <h1>Lista de produtos</h1>
         <ProductTable products={products} />
       </div>
     </div>
