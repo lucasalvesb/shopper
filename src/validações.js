@@ -44,7 +44,6 @@ app.post('/uploads', upload.single('file'), (req, res) => {
     const fileExtension = path.extname(file.originalname)
     const oldPath = file.path
     const newPath = `${file.path}${fileExtension}`
-    const queryToArray = 'SELECT code, name, sales_price FROM products'
 
     fs.rename(oldPath, newPath, (err) => {
       if (err) {

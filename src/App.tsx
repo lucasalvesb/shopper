@@ -8,9 +8,9 @@ export default function App() {
   const [file, setFile] = useState<File | null>(null)
   const [isButtonDisabled, setIsButtonDisabled] = useState(true)
   const [responseMessage, setResponseMessage] = useState('')
-  const [productData, setProductData] = useState([])
   const [products, setProducts] = useState<Product[]>([])
   const [columns, setColumns] = useState<Column[]>([])
+  const [errorMessage, setErrorMessage] = useState('')
 
   type Product = {
     product_code: number
@@ -95,7 +95,7 @@ function handleValidation() {
                   product_code: product.product_code,
                   name: product.name,
                   sales_price: product.sales_price,
-                  new_price: newPrice,
+                  new_price: newPrice
                 }
               } else {
                 return product
