@@ -10,7 +10,6 @@ export default function App() {
   const [responseMessage, setResponseMessage] = useState('')
   const [products, setProducts] = useState<Product[]>([])
   const [columns, setColumns] = useState<Column[]>([])
-  const [errorMessage, setErrorMessage] = useState('')
 
   type Product = {
     product_code: number
@@ -72,53 +71,81 @@ export default function App() {
     }
   }
 
-function handleValidation() {
-  if (file) {
-    const formData = new FormData()
-    formData.append('file', file)
+  function handleValidation() {
+    if (file) {
+      const formData = new FormData()
+      formData.append('file', file)
+      console.log(formData)
 
-    axios
-      .post('http://localhost:5173/uploads', formData)
-      .then((response) => {
-        setResponseMessage(response.data.message)
-        const results = response.data.results.reduce((acc: any, curr: { product_code: any; new_price: any }) => {
-          return { ...acc, [curr.product_code]: curr.new_price }
-        }, {})
-        axios
-          .post('http://localhost:5173/columns')
-          .then((response) => {
-            const columns = response.data.columns
-            const products = columns.map((product: any) => {
-              const newPrice = results[product.product_code]
-              if (newPrice) {
-                return {
-                  product_code: product.product_code,
-                  name: product.name,
-                  sales_price: product.sales_price,
-                  new_price: newPrice
+      axios
+        .post('http://localhost:5173/uploads', formData)
+        .then((response) => {
+          setResponseMessage(response.data.message)
+          const results = response.data.results.reduce(
+            (acc: any, curr: { product_code: any; new_price: any }) => {
+              return { ...acc, [curr.product_code]: curr.new_price }
+            },
+            {}
+          )
+          axios
+            .post('http://localhost:5173/columns')
+            .then((response) => {
+              const columns = response.data.columns
+              const products = columns.map((product: any) => {
+                const newPrice = results[product.product_code]
+                if (newPrice) {
+                  return {
+                    product_code: product.product_code,
+                    name: product.name,
+                    sales_price: product.sales_price,
+                    new_price: newPrice,
+                  }
+                } else {
+                  return product
                 }
-              } else {
-                return product
-              }
+              })
+              setProducts(products)
             })
-            setProducts(products)
-          })
-          .catch((error) => {
-            console.error(error)
-          })
-      })
-      .catch((error) => {
-        console.error(error)
-      })
+            .catch((error) => {
+              console.error(error)
+            })
+        })
+        .catch((error) => {
+          console.error(error)
+        })
+    }
+  }
+
+  async function updateProduct(updatedProduct: Product) {
+    try {
+      await axios.put(
+        `http://localhost:5173/products/${updatedProduct.product_code}`,
+        {
+          sales_price: updatedProduct.new_price,
+        }
+      )
+      const updatedProducts = products.map((product) =>
+        product.product_code === updatedProduct.product_code
+          ? { ...product, sales_price: updatedProduct.new_price }
+          : product
+      )
+      setProducts(updatedProducts)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+async function handleUpdate() {
+  for (const product of products) {
+    if (product.new_price !== undefined) {
+      await updateProduct(product)
+    }
   }
 }
 
-  function handleUpdate() {
-    // update
-  }
-
   return (
     <div>
+      <h1>Faça o upload do seu arquivo abaixo</h1>
       <input
         type="file"
         onChange={handleFileUpload}

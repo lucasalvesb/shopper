@@ -27,7 +27,12 @@ app.use(function (req, res, next) {
   next()
 })
 
-
+app.options('*', (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*')
+  res.set('Access-Control-Allow-Headers', 'Content-Type')
+  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
+  res.status(200).send()
+})
 
 // set up multer middleware
 const upload = multer({ dest: 'uploads/' })
@@ -74,37 +79,62 @@ app.post('/uploads', upload.single('file'), (req, res) => {
               res.status(200).json({ results })
             } else {
               console.log('Arquivo não tem contém as colunas necessárias')
-              res
+              return res
                 .status(400)
                 .send(
                   'O arquivo precisa ter as colunas product_code e new_price'
                 )
             }
           })
+        
+        //enviar pro bacno de dados
+        app.post('/update/', (req, res) => {
+          const { product_code, new_price } = req.body
 
-        // checagem se os códigos de produtos informados existem
-        fs.createReadStream(newPath)
-          .pipe(csv())
-          .on('data', (data) => {
-            const productCode = data['product_code']
-            const sql = `SELECT * FROM products WHERE code='${productCode}'`
-
-            connection.query(sql, (err, rows) => {
-              if (err) {
-                console.error(err)
+          connection.query(
+            `UPDATE products SET sales_price = ? WHERE product_code = ?`,
+            [new_price, product_code],
+            (error, results) => {
+              if (error) {
+                console.error(error)
+                res.status(500).send('Error updating product')
               } else {
-                if (rows.length === 0) {
-                  console.log(
-                    `Produto com código ${productCode} não existe no banco de dados`
-                  )
-                } else {
-                  console.log(
-                    `Produto com código ${productCode} existe no banco de dados`
-                  )
-                }
+                console.log(
+                  `Updated product ${product_code} with sales_price ${new_price}`
+                )
+                res.status(200).send('Product updated')
               }
-            })
-          })
+            }
+          )
+        })
+        // checagem se os códigos de produtos informados existem
+try {
+  fs.createReadStream(newPath)
+    .pipe(csv())
+    .on('data', (data) => {
+      const productCode = data['product_code']
+      const sql = `SELECT * FROM products WHERE code='${productCode}'`
+
+      connection.query(sql, (err, rows) => {
+        if (err) {
+          throw err // throw the error here
+        } else {
+          if (rows.length === 0) {
+            console.log(
+              `Produto com código ${productCode} não existe no banco de dados`
+            )
+          } else {
+            console.log(
+              `Produto com código ${productCode} existe no banco de dados`
+            )
+          }
+        }
+      })
+    })
+} catch (err) {
+  // handle the error here
+  console.error(err)
+}
 
         // checagem se os preços estão preenchidos e são valores numéricos válidos
         const csvParser = csv()
@@ -196,7 +226,7 @@ app.post('/uploads', upload.single('file'), (req, res) => {
           console.log(req.body)
           const { productCodes } = req.body
           const sql = `SELECT code, name, sales_price FROM products`
-            console.log(sql)
+          console.log(sql)
           connection.query(sql, (err, rows) => {
             if (err) {
               console.error(err)
@@ -210,7 +240,6 @@ app.post('/uploads', upload.single('file'), (req, res) => {
                 sales_price: row.sales_price,
               }))
               res.status(200).json({ columns })
-              
             }
           })
         })
